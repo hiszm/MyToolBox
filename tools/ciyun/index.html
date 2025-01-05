@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线词云生成器</title>
+    <script src="<url id="" type="url" status="" title="" wc="">https://unpkg.com/vue@3/dist/vue.global.js"></script></url> 
+    <script src="<url id="" type="url" status="" title="" wc="">https://cdn.tailwindcss.com"></script></url> 
+    <script src="<url id="" type="url" status="" title="" wc="">https://d3js.org/d3.v7.min.js"></script></url> 
+    <script src="<url id="" type="url" status="" title="" wc="">https://cdn.jsdelivr.net/npm/d3-cloud@1.2.5/build/d3.layout.cloud.min.js"></script></url> 
+    <!-- 使用 tiny-segmenter 分词库 -->
+    <script src="<url id="" type="url" status="" title="" wc="">https://cdn.jsdelivr.net/npm/tiny-segmenter@0.2.0/dist/tiny-segmenter-0.2.0.min.js"></script></url> 
+    <style>
+        [v-cloak] { display: none; }
+        .word-cloud-container {
+            min-height: 600px;
+            background-color: white;
+        }
+        @media (max-width: 768px) {
+            .word-cloud-container {
+                min-height: 400px;
+            }
+        }
+        .freq-info {
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="app" v-cloak class="container mx-auto p-4">
+        <div class="flex flex-col lg:flex-row gap-4">
+            <!-- 左侧面板 -->
+            <div class="lg:w-1/2 space-y-4">
+                <!-- 输入文本区域 -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">输入文本</label>
+                    <textarea
+                        v-model="inputText"
+                        class="w-full h-48 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="请输入要生成词云的文本..."></textarea>
+                </div>
+
+                <!-- 词语列表区域 -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">词语列表（显示词频）</label>
+                    <div class="relative">
+                        <div class="w-full h-48 p-2 border border-gray-300 rounded-md shadow-sm overflow-y-auto">
+                            <div v-for="(freq, word) in filteredWordFrequencies" :key="word" class="flex justify-between items-center py-1">
+                                <input
+                                    v-model="wordFrequencies[word]"
+                                    type="number"
+                                    class="w-16 h-8 px-2 border rounded"
+                                    min="1"
+                                    @change="updateWordCloud"
+                                />
+                                <input
+                                    v-model="word"
+                                    type="text"
+                                    class="w-24 h-8 px-2 border rounded"
+                                    @change="updateWord(word)"
+                                />
+                                <button
+                                    @click="removeWord(word)"
+                                    class="px-2 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">
+                                    删除
+                                </button>
+                            </div>
+                            <div class="flex items-center mt-2">
+                                <input
+                                    v-model="newWord"
+                                    type="text"
+                                    class="w-24 h-8 px-2 border rounded"
+                                    placeholder="新词语"
+                                />
+                                <input
+                                    v-model="newWordFreq"
+                                    type="number"
+                                    class="w-16 h-8 px-2 border rounded ml-2"
+                                    min="1"
+                                    placeholder="频率"
+                                />
+                                <button
+                                    @click="addWord"
+                                    class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ml-2">
+                                    添加
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分词设置 -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">分词设置</label>
+                    <div class="flex space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" v-model="settings.filterStopWords" class="form-checkbox">
+                            <span class="ml-2">过滤停用词</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="number" v-model="settings.minLength" class="w-16 h-8 px-2 border rounded" min="1">
+                            <span class="ml-2">最小词长</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 过滤设置 -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">过滤设置</label>
+                    <div class="flex space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="number" v-model="settings.minFreq" class="w-16 h-8 px-2 border rounded" min="1">
+                            <span class="ml-2">最小词频</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 按钮组 -->
+                <div class="flex space-x-4">
+                    <button
+                        @click="cleanText"
+                        class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                        清洗文本
+                    </button>
+                    <button
+                        @click="clearAll"
+                        class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
+                        清空
+                    </button>
+                    <button
+                        @click="generateWordCloud"
+                        class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">
+                        生成词云
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右侧词云展示区域 -->
+            <div class="lg:w-1/2">
+                <div class="word-cloud-container bg-white rounded-lg shadow-md p-4">
+                    <div id="word-cloud" class="w-full h-full"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, reactive, computed } = Vue
+
+        // 停用词列表
+        const stopWords = new Set(['的', '了', '和', '是', '就', '都', '而', '及', '与', '着', '之', '用', '于', '把', '被', '让', '给', '但', '却', '并', '很', '也', '这', '那', '有', '去', '来', '做', '可以', '能', '要', '会', '又', '在', '中', '等', '更', '还', '只', '又', '或', '某', '个', '从', '到', '为', '以', '及', '则', '和', '与', '就', '而', '但', '还', '又', '并', '或']);
+
+        createApp({
+            setup() {
+                // 默认给一句话作为例子
+                const inputText = ref('这是一个简单的例子，用于测试在线词云生成器的功能。')
+                const wordFrequencies = reactive({})
+                const settings = reactive({
+                    filterStopWords: true,
+                    minLength: 2,
+                    minFreq: 1
+                })
+                const newWord = ref('')
+                const newWordFreq = ref(1)
+
+                // 清洗文本
+                const cleanText = () => {
+                    if (!inputText.value) return
+
+                    // 使用 tiny-segmenter 分词
+                    const segmenter = new TinySegmenter();
+                    const words = segmenter.segment(inputText.value);
+
+                    // 过滤词语
+                    const filteredWords = words.filter(word => {
+                        // 过滤空格和换行
+                        if (!word.trim()) return false
+                        
+                        // 过滤停用词
+                        if (settings.filterStopWords && stopWords.has(word)) return false
+                        
+                        // 过滤短词
+                        if (word.length < settings.minLength) return false
+                        
+                        // 只保留中文和英文
+                        return /^[\u4e00-\u9fa5a-zA-Z]+$/.test(word)
+                    })
+
+                    // 统计词频
+                    Object.keys(wordFrequencies).forEach(key => delete wordFrequencies[key])
+                    filteredWords.forEach(word => {
+                        wordFrequencies[word] = (wordFrequencies[word] || 0) + 1
+                    })
+                }
+
+                // 清空所有内容
+                const clearAll = () => {
+                    inputText.value = ''
+                    Object.keys(wordFrequencies).forEach(key => delete wordFrequencies[key])
+                    document.getElementById('word-cloud').innerHTML = ''
+                }
+
+                // 添加词语
+                const addWord = () => {
+                    if (newWord.value.trim() && newWordFreq.value > 0) {
+                        wordFrequencies[newWord.value] = newWordFreq.value
+                        newWord.value = ''
+                        newWordFreq.value = 1
+                        generateWordCloud()
+                    }
+                }
+
+                // 删除词语
+                const removeWord = (word) => {
+                    delete wordFrequencies[word]
+                    generateWordCloud()
+                }
+
+                // 更新词语
+                const updateWord = (oldWord) => {
+                    const newWord = oldWord.trim()
+                    if (newWord && wordFrequencies[oldWord]) {
+                        wordFrequencies[newWord] = wordFrequencies[oldWord]
+                        delete wordFrequencies[oldWord]
+                        generateWordCloud()
+                    }
+                }
+
+                // 更新词云
+                const updateWordCloud = () => {
+                    generateWordCloud()
+                }
+
+                // 过滤后的词语列表
+                const filteredWordFrequencies = computed(() => {
+                    return Object.fromEntries(
+                        Object.entries(wordFrequencies)
+                            .filter(([word, freq]) => freq >= settings.minFreq)
+                    )
+                })
+
+                // 生成词云
+                const generateWordCloud = () => {
+                    if (Object.keys(filteredWordFrequencies.value).length === 0) return
+
+                    // 将词频数据转换为词云所需的格式
+                    const maxFreq = Math.max(...Object.values(filteredWordFrequencies.value))
+                    const wordData = Object.entries(filteredWordFrequencies.value).map(([text, freq]) => ({
+                        text,
+                        size: 20 + (freq / maxFreq) * 80 // 根据词频比例计算字体大小 (20-100px)
+                    }))
+
+                    // 清空现有词云
+                    document.getElementById('word-cloud').innerHTML = ''
+
+                    // 获取容器尺寸
+                    const container = document.querySelector('.word-cloud-container')
+                    const width = container.clientWidth
+                    const height = container.clientHeight
+
+                    // 创建词云布局
+                    const layout = d3.layout.cloud()
+                        .size([width, height])
+                        .words(wordData)
+                        .padding(5)
+                        .rotate(() => ~~(Math.random() * 2) * 90)
+                        .fontSize(d => d.size)
+                        .on('end', draw)
+
+                    layout.start()
+
+                    function draw(words) {
+                        // 创建颜色比例尺
+                        const color = d3.scaleOrdinal(d3.schemeCategory10)
+
+                        d3.select('#word-cloud')
+                            .append('svg')
+                            .attr('width', layout.size()[0])
+                            .attr('height', layout.size()[1])
+                            .append('g')
+                            .attr('transform', `translate(${layout.size()[0] / 2},${layout.size()[1] / 2})`)
+                            .selectAll('text')
+                            .data(words)
+                            .enter()
+                            .append('text')
+                            .style('font-size', d => `${d.size}px`)
+                            .style('font-family', 'Impact')
+                            .style('fill', (d, i) => color(i))
+                            .attr('text-anchor', 'middle')
+                            .attr('transform', d => `translate(${d.x},${d.y})rotate(${d.rotate})`)
+                            .text(d => d.text)
+                            .on('mouseover', function() {
+                                d3.select(this)
+                                    .transition()
+                                    .duration(200)
+                                    .style('font-size', d => `${d.size * 1.2}px`)
+                            })
+                            .on('mouseout', function() {
+                                d3.select(this)
+                                    .transition()
+                                    .duration(200)
+                                    .style('font-size', d => `${d.size}px`)
+                            })
+                    }
+                }
+
+                return {
+                    inputText,
+                    wordFrequencies,
+                    filteredWordFrequencies,
+                    settings,
+                    newWord,
+                    newWordFreq,
+                    cleanText,
+                    clearAll,
+                    addWord,
+                    removeWord,
+                    updateWord,
+                    updateWordCloud,
+                    generateWordCloud
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
