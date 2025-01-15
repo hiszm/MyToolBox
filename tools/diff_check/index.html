@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive 表数据比对工具</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+</head>
+<body>
+    <div id="app">
+        <div class="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
+            <div class="relative py-3 sm:max-w-5xl sm:mx-auto">
+                <div class="relative px-4 py-10 bg-white mx-8 md:mx-0 shadow rounded-3xl sm:p-10">
+                    <div class="max-w-4xl mx-auto">
+                        <div class="divide-y divide-gray-200">
+                            <div class="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
+                                <h1 class="text-2xl font-bold text-center mb-8 text-indigo-600">
+                                    Hive 表数据比对工具
+                                </h1>
+                                
+                                <!-- 快速填充按钮组 -->
+                                <div class="flex justify-end space-x-4">
+                                    <button @click="fillExample1" 
+                                            class="text-sm text-indigo-600 hover:text-indigo-800 px-3 py-1 border border-indigo-600 rounded">
+                                        示例1: 普通表
+                                    </button>
+                                    <button @click="fillExample2" 
+                                            class="text-sm text-green-600 hover:text-green-800 px-3 py-1 border border-green-600 rounded">
+                                        示例2: 多主键表
+                                    </button>
+                                    <button @click="fillExample3" 
+                                            class="text-sm text-purple-600 hover:text-purple-800 px-3 py-1 border border-purple-600 rounded">
+                                        示例3: 分区表
+                                    </button>
+                                </div>
+
+                                <!-- 表名输入区域 -->
+                                <div class="grid grid-cols-1 gap-6">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <!-- 表1 -->
+                                        <div class="space-y-2">
+                                            <label class="text-sm font-bold text-gray-700">表1</label>
+                                            <input 
+                                                v-model="table1"
+                                                type="text"
+                                                class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                                placeholder="输入表1完整表名"
+                                            />
+                                            <!-- 表1分区设置 -->
+                                            <div class="space-y-2">
+                                                <div class="flex items-center space-x-2">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        v-model="usePartition1"
+                                                        class="rounded text-indigo-600 focus:ring-indigo-500"
+                                                    />
+                                                    <label class="text-sm font-bold text-gray-700">使用分区过滤</label>
+                                                </div>
+                                                <div v-if="usePartition1" class="grid grid-cols-2 gap-4">
+                                                    <input 
+                                                        v-model="partitionField1"
+                                                        type="text"
+                                                        class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                                        placeholder="分区字段名（例如：dt）"
+                                                    />
+                                                    <input 
+                                                        v-model="partitionValue1"
+                                                        type="text"
+                                                        class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                                        placeholder="分区值（例如：20250106）"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- 表2 -->
+                                        <div class="space-y-2">
+                                            <label class="text-sm font-bold text-gray-700">表2</label>
+                                            <input 
+                                                v-model="table2"
+                                                type="text"
+                                                class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                                placeholder="输入表2完整表名"
+                                            />
+                                            <!-- 表2分区设置 -->
+                                            <div class="space-y-2">
+                                                <div class="flex items-center space-x-2">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        v-model="usePartition2"
+                                                        class="rounded text-indigo-600 focus:ring-indigo-500"
+                                                    />
+                                                    <label class="text-sm font-bold text-gray-700">使用分区过滤</label>
+                                                </div>
+                                                <div v-if="usePartition2" class="grid grid-cols-2 gap-4">
+                                                    <input 
+                                                        v-model="partitionField2"
+                                                        type="text"
+                                                        class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                                        placeholder="分区字段名（例如：dt）"
+                                                    />
+                                                    <input 
+                                                        v-model="partitionValue2"
+                                                        type="text"
+                                                        class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                                        placeholder="分区值（例如：20250106）"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 字段输入区域 -->
+                                <div class="space-y-4">
+                                    <label class="text-sm font-bold text-gray-700">表字段列表（每行一个字段名）</label>
+                                    <textarea 
+                                        v-model="fieldsInput"
+                                        rows="10"
+                                        class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-400 font-mono text-sm"
+                                        placeholder="例如：
+id
+name
+age
+..."
+                                    ></textarea>
+                                </div>
+
+                                <!-- 主键设置 -->
+                                <div class="space-y-2">
+                                    <label class="text-sm font-bold text-gray-700">主键字段（多个字段用逗号分隔）</label>
+                                    <input 
+                                        v-model="primaryKeys"
+                                        type="text"
+                                        class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                        placeholder="例如: id 或 order_id,detail_id"
+                                    />
+                                </div>
+
+                                <!-- 生成按钮 -->
+                                <div class="flex justify-center">
+                                    <button 
+                                        @click="generateSQL"
+                                        class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    >
+                                        生成比对 SQL
+                                    </button>
+                                </div>
+
+                                <!-- SQL结果展示区域 -->
+                                <div v-if="generatedSQL" class="space-y-4 mt-6">
+                                    <div class="flex justify-between items-center">
+                                        <label class="text-sm font-bold text-gray-700">生成的 SQL:</label>
+                                        <button 
+                                            @click="copySQL"
+                                            class="bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300"
+                                        >
+                                            复制SQL
+                                        </button>
+                                    </div>
+                                    <pre class="bg-gray-50 p-4 rounded-lg overflow-x-auto text-sm">{{ generatedSQL }}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    table1: '',
+                    table2: '',
+                    fieldsInput: '',
+                    primaryKeys: '',
+                    usePartition1: false,
+                    partitionField1: 'dt',
+                    partitionValue1: '',
+                    usePartition2: false,
+                    partitionField2: 'dt',
+                    partitionValue2: '',
+                    generatedSQL: ''
+                }
+            },
+            methods: {
+                // 示例1：普通表
+                fillExample1() {
+                    this.table1 = 'ods.user_info';
+                    this.table2 = 'ods.user_info_backup';
+                    this.fieldsInput = `id
+name
+age
+gender
+email
+create_time
+update_time
+status`;
+                    this.primaryKeys = 'id';
+                    this.usePartition1 = false;
+                    this.usePartition2 = false;
+                    this.partitionField1 = '';
+                    this.partitionValue1 = '';
+                    this.partitionField2 = '';
+                    this.partitionValue2 = '';
+                },
+                // 示例2：多主键表
+                fillExample2() {
+                    this.table1 = 'ods.order_detail';
+                    this.table2 = 'ods.order_detail_backup';
+                    this.fieldsInput = `order_id
+detail_id
+product_name
+quantity
+price
+create_time
+update_time
+status`;
+                    this.primaryKeys = 'order_id,detail_id';
+                    this.usePartition1 = false;
+                    this.usePartition2 = false;
+                    this.partitionField1 = '';
+                    this.partitionValue1 = '';
+                    this.partitionField2 = '';
+                    this.partitionValue2 = '';
+                },
+                // 示例3：分区表
+                fillExample3() {
+                    this.table1 = 'ods.log_data';
+                    this.table2 = 'ods.log_data_backup';
+                    this.fieldsInput = `log_id
+user_id
+action
+action_time
+ip_address
+device
+dt`;
+                    this.primaryKeys = 'log_id';
+                    this.usePartition1 = true;
+                    this.usePartition2 = true;
+                    this.partitionField1 = 'dt';
+                    this.partitionValue1 = '20231001';
+                    this.partitionField2 = 'dt';
+                    this.partitionValue2 = '20231001';
+                },
+                generateSQL() {
+                    if (!this.table1 || !this.table2 || !this.fieldsInput.trim() || !this.primaryKeys) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '错误',
+                            text: '请填写表名、字段列表和主键信息！',
+                        });
+                        return;
+                    }
+
+                    const fields = this.fieldsInput
+                        .split('\n')
+                        .filter(line => line.trim());
+                    
+                    const primaryKeyArr = this.primaryKeys.split(',').map(k => k.trim());
+                    
+                    // 构建主键ON条件
+                    const joinConditions = primaryKeyArr
+                        .map(key => `a.${key} = b.${key}`)
+                        .join(' AND ');
+
+                    // 构建分区条件
+                    const partitionWhere1 = this.usePartition1 && this.partitionField1 && this.partitionValue1
+                        ? `a.${this.partitionField1} = '${this.partitionValue1}'`
+                        : '';
+                    const partitionWhere2 = this.usePartition2 && this.partitionField2 && this.partitionValue2
+                        ? `b.${this.partitionField2} = '${this.partitionValue2}'`
+                        : '';
+                    const partitionWhere = [partitionWhere1, partitionWhere2].filter(Boolean).join(' AND ');
+
+                    // 构建比对字段（排除主键和分区字段）
+                    const compareFields = fields
+                        .filter(field => !primaryKeyArr.includes(field))
+                        .filter(field => !(this.usePartition1 && field === this.partitionField1))
+                        .filter(field => !(this.usePartition2 && field === this.partitionField2))
+                        .map(field => `COALESCE(CAST(a.${field} AS STRING), '') != COALESCE(CAST(b.${field} AS STRING), '')`)
+                        .join(' OR\n            ');
+                    
+                    // 使用第一个主键作为默认的检查依据
+                    const firstPrimaryKey = primaryKeyArr[0];
+
+                    this.generatedSQL = `-- 统计数据量
+SELECT 
+    '${this.table1}' as table_name,
+    COUNT(*) as total_count
+FROM ${this.table1}
+${this.usePartition1 ? `WHERE ${partitionWhere1}` : ''}
+UNION ALL
+SELECT 
+    '${this.table2}' as table_name,
+    COUNT(*) as total_count
+FROM ${this.table2}
+${this.usePartition2 ? `WHERE ${partitionWhere2}` : ''};
+
+-- 检查数据差异
+WITH diff_check AS (
+SELECT 
+    CASE 
+        WHEN a.${firstPrimaryKey} IS NULL THEN '仅在表2中存在'
+        WHEN b.${firstPrimaryKey} IS NULL THEN '仅在表1中存在'
+        WHEN (
+            ${compareFields}
+        ) THEN '数据不一致'
+        ELSE '数据一致'
+    END as diff_type,
+    ${primaryKeyArr.map(key => `COALESCE(a.${key}, b.${key}) as ${key}`).join(',\n    ')}
+FROM ${this.table1} a
+FULL OUTER JOIN ${this.table2} b
+ON ${joinConditions}
+${partitionWhere ? `WHERE ${partitionWhere}` : ''}
+)
+SELECT 
+    diff_type,
+    COUNT(*) as count
+FROM diff_check
+GROUP BY diff_type
+ORDER BY diff_type;
+
+-- 查看不一致的详细数据（限制100条）
+WITH diff_detail AS (
+SELECT 
+    CASE 
+        WHEN a.${firstPrimaryKey} IS NULL THEN '仅在表2中存在'
+        WHEN b.${firstPrimaryKey} IS NULL THEN '仅在表1中存在'
+        WHEN (
+            ${compareFields}
+        ) THEN '数据不一致'
+        ELSE '数据一致'
+    END as diff_type,
+    ${fields.map(f => `COALESCE(CAST(a.${f} AS STRING), '') as table1_${f},
+    COALESCE(CAST(b.${f} AS STRING), '') as table2_${f}`).join(',\n    ')}
+FROM ${this.table1} a
+FULL OUTER JOIN ${this.table2} b
+ON ${joinConditions}
+${partitionWhere ? `WHERE ${partitionWhere}` : ''}
+)
+SELECT *
+FROM diff_detail
+WHERE diff_type != '数据一致'
+LIMIT 100;`;
+                },
+                copySQL() {
+                    navigator.clipboard.writeText(this.generatedSQL)
+                        .then(() => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '复制成功',
+                                text: 'SQL已复制到剪贴板！',
+                                timer: 1500, // 1.5秒后自动关闭
+                                showConfirmButton: false
+                            });
+                        })
+                        .catch(err => {
+                            console.error('复制失败:', err);
+                            Swal.fire({
+                                icon: 'error',
+                                title: '复制失败',
+                                text: '请手动复制SQL！',
+                            });
+                        });
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
