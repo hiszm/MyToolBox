@@ -6,7 +6,6 @@
     <title>Hive 表数据比对工具</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 </head>
@@ -23,17 +22,17 @@
                                 </h1>
                                 
                                 <!-- 快速填充按钮组 -->
-                                <div class="flex justify-end space-x-4">
+                                <div class="flex justify-end space-x-4 mb-4">
                                     <button @click="fillExample1" 
-                                            class="text-sm text-indigo-600 hover:text-indigo-800 px-3 py-1 border border-indigo-600 rounded">
+                                            class="text-sm text-indigo-600 hover:text-indigo-800 px-3 py-1 border border-indigo-600 rounded transition-colors">
                                         示例1: 普通表
                                     </button>
                                     <button @click="fillExample2" 
-                                            class="text-sm text-green-600 hover:text-green-800 px-3 py-1 border border-green-600 rounded">
+                                            class="text-sm text-green-600 hover:text-green-800 px-3 py-1 border border-green-600 rounded transition-colors">
                                         示例2: 多主键表
                                     </button>
                                     <button @click="fillExample3" 
-                                            class="text-sm text-purple-600 hover:text-purple-800 px-3 py-1 border border-purple-600 rounded">
+                                            class="text-sm text-purple-600 hover:text-purple-800 px-3 py-1 border border-purple-600 rounded transition-colors">
                                         示例3: 分区表
                                     </button>
                                 </div>
@@ -43,7 +42,7 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <!-- 表1 -->
                                         <div class="space-y-2">
-                                            <label class="text-sm font-bold text-gray-700">表1</label>
+                                            <label class="text-sm font-bold text-gray-700">表1 (格式: db.table)</label>
                                             <input 
                                                 v-model="table1"
                                                 type="text"
@@ -65,20 +64,20 @@
                                                         v-model="partitionField1"
                                                         type="text"
                                                         class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                                                        placeholder="分区字段名（例如：dt）"
+                                                        placeholder="分区字段名"
                                                     />
                                                     <input 
                                                         v-model="partitionValue1"
                                                         type="text"
                                                         class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                                                        placeholder="分区值（例如：20250106）"
+                                                        placeholder="分区值"
                                                     />
                                                 </div>
                                             </div>
                                         </div>
                                         <!-- 表2 -->
                                         <div class="space-y-2">
-                                            <label class="text-sm font-bold text-gray-700">表2</label>
+                                            <label class="text-sm font-bold text-gray-700">表2 (格式: db.table)</label>
                                             <input 
                                                 v-model="table2"
                                                 type="text"
@@ -100,13 +99,13 @@
                                                         v-model="partitionField2"
                                                         type="text"
                                                         class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                                                        placeholder="分区字段名（例如：dt）"
+                                                        placeholder="分区字段名"
                                                     />
                                                     <input 
                                                         v-model="partitionValue2"
                                                         type="text"
                                                         class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                                                        placeholder="分区值（例如：20250106）"
+                                                        placeholder="分区值"
                                                     />
                                                 </div>
                                             </div>
@@ -129,24 +128,39 @@ age
                                     ></textarea>
                                 </div>
 
-                                <!-- 主键设置 -->
-                                <div class="space-y-2">
-                                    <label class="text-sm font-bold text-gray-700">主键字段（多个字段用逗号分隔）</label>
-                                    <input 
-                                        v-model="primaryKeys"
-                                        type="text"
-                                        class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                                        placeholder="例如: id 或 order_id,detail_id"
-                                    />
+                                <!-- 配置选项组 -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- 主键设置 -->
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700">主键字段（多个用逗号分隔）</label>
+                                        <input 
+                                            v-model="primaryKeys"
+                                            type="text"
+                                            class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                            placeholder="例如: id 或 order_id,detail_id"
+                                        />
+                                    </div>
+                                    <!-- 字段类型选择 -->
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-gray-700">字段转换类型</label>
+                                        <select 
+                                            v-model="castType"
+                                            class="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                        >
+                                            <option value="STRING">STRING</option>
+                                            <option value="VARCHAR">VARCHAR</option>
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <!-- 生成按钮 -->
-                                <div class="flex justify-center">
+                                <div class="flex justify-center mt-4">
                                     <button 
                                         @click="generateSQL"
-                                        class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                        :disabled="loading"
+                                        class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 transition-colors"
                                     >
-                                        生成比对 SQL
+                                        {{ loading ? '生成中...' : '生成比对 SQL' }}
                                     </button>
                                 </div>
 
@@ -154,12 +168,20 @@ age
                                 <div v-if="generatedSQL" class="space-y-4 mt-6">
                                     <div class="flex justify-between items-center">
                                         <label class="text-sm font-bold text-gray-700">生成的 SQL:</label>
-                                        <button 
-                                            @click="copySQL"
-                                            class="bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300"
-                                        >
-                                            复制SQL
-                                        </button>
+                                        <div class="space-x-2">
+                                            <button 
+                                                @click="copySQL"
+                                                class="bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300 transition-colors"
+                                            >
+                                                复制SQL
+                                            </button>
+                                            <button 
+                                                @click="generatedSQL = ''"
+                                                class="bg-red-100 px-3 py-1 rounded text-sm hover:bg-red-200 transition-colors"
+                                            >
+                                                清空
+                                            </button>
+                                        </div>
                                     </div>
                                     <pre class="bg-gray-50 p-4 rounded-lg overflow-x-auto text-sm">{{ generatedSQL }}</pre>
                                 </div>
@@ -181,195 +203,196 @@ age
                     table2: '',
                     fieldsInput: '',
                     primaryKeys: '',
+                    castType: 'STRING',
                     usePartition1: false,
                     partitionField1: 'dt',
                     partitionValue1: '',
                     usePartition2: false,
                     partitionField2: 'dt',
                     partitionValue2: '',
-                    generatedSQL: ''
+                    generatedSQL: '',
+                    loading: false
                 }
             },
             methods: {
-                // 示例1：普通表
-                fillExample1() {
-                    this.table1 = 'ods.user_info';
-                    this.table2 = 'ods.user_info_backup';
-                    this.fieldsInput = `id
-name
-age
-gender
-email
-create_time
-update_time
-status`;
-                    this.primaryKeys = 'id';
-                    this.usePartition1 = false;
-                    this.usePartition2 = false;
-                    this.partitionField1 = '';
-                    this.partitionValue1 = '';
-                    this.partitionField2 = '';
-                    this.partitionValue2 = '';
-                },
-                // 示例2：多主键表
-                fillExample2() {
-                    this.table1 = 'ods.order_detail';
-                    this.table2 = 'ods.order_detail_backup';
-                    this.fieldsInput = `order_id
-detail_id
-product_name
-quantity
-price
-create_time
-update_time
-status`;
-                    this.primaryKeys = 'order_id,detail_id';
-                    this.usePartition1 = false;
-                    this.usePartition2 = false;
-                    this.partitionField1 = '';
-                    this.partitionValue1 = '';
-                    this.partitionField2 = '';
-                    this.partitionValue2 = '';
-                },
-                // 示例3：分区表
-                fillExample3() {
-                    this.table1 = 'ods.log_data';
-                    this.table2 = 'ods.log_data_backup';
-                    this.fieldsInput = `log_id
-user_id
-action
-action_time
-ip_address
-device
-dt`;
-                    this.primaryKeys = 'log_id';
-                    this.usePartition1 = true;
-                    this.usePartition2 = true;
-                    this.partitionField1 = 'dt';
-                    this.partitionValue1 = '20231001';
-                    this.partitionField2 = 'dt';
-                    this.partitionValue2 = '20231001';
-                },
-                generateSQL() {
-                    if (!this.table1 || !this.table2 || !this.fieldsInput.trim() || !this.primaryKeys) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: '错误',
-                            text: '请填写表名、字段列表和主键信息！',
-                        });
-                        return;
+                validateInput() {
+                    // 基础校验
+                    if (!this.table1 || !this.table2) {
+                        Swal.fire('错误', '请填写完整表名', 'error')
+                        return false
+                    }
+                    if (!this.table1.includes('.') || !this.table2.includes('.')) {
+                        Swal.fire('警告', '表名应包含数据库名（格式：db.table）', 'warning')
+                    }
+                    if (!this.fieldsInput.trim()) {
+                        Swal.fire('错误', '请填写字段列表', 'error')
+                        return false
+                    }
+                    if (!this.primaryKeys) {
+                        Swal.fire('错误', '请填写主键字段', 'error')
+                        return false
                     }
 
-                    const fields = this.fieldsInput
-                        .split('\n')
-                        .filter(line => line.trim());
-                    
-                    const primaryKeyArr = this.primaryKeys.split(',').map(k => k.trim());
-                    
-                    // 构建主键ON条件
-                    const joinConditions = primaryKeyArr
-                        .map(key => `a.${key} = b.${key}`)
-                        .join(' AND ');
+                    // 分区校验
+                    if (this.usePartition1 && (!this.partitionField1 || !this.partitionValue1)) {
+                        Swal.fire('错误', '表1分区字段和值不能为空', 'error')
+                        return false
+                    }
+                    if (this.usePartition2 && (!this.partitionField2 || !this.partitionValue2)) {
+                        Swal.fire('错误', '表2分区字段和值不能为空', 'error')
+                        return false
+                    }
 
-                    // 构建分区条件
-                    const partitionWhere1 = this.usePartition1 && this.partitionField1 && this.partitionValue1
-                        ? `a.${this.partitionField1} = '${this.partitionValue1}'`
-                        : '';
-                    const partitionWhere2 = this.usePartition2 && this.partitionField2 && this.partitionValue2
-                        ? `b.${this.partitionField2} = '${this.partitionValue2}'`
-                        : '';
-                    const partitionWhere = [partitionWhere1, partitionWhere2].filter(Boolean).join(' AND ');
+                    // 校验主键是否在字段列表中
+                    const fields = this.getFieldsArray()
+                    const missingKeys = this.getPrimaryKeysArray().filter(k => !fields.includes(k))
+                    if (missingKeys.length > 0) {
+                        Swal.fire('错误', `主键字段不存在：${missingKeys.join(', ')}`, 'error')
+                        return false
+                    }
 
-                    // 构建比对字段（排除主键和分区字段）
-                    const compareFields = fields
-                        .filter(field => !primaryKeyArr.includes(field))
-                        .filter(field => !(this.usePartition1 && field === this.partitionField1))
-                        .filter(field => !(this.usePartition2 && field === this.partitionField2))
-                        .map(field => `COALESCE(CAST(a.${field} AS STRING), '') != COALESCE(CAST(b.${field} AS STRING), '')`)
-                        .join(' OR\n            ');
-                    
-                    // 使用第一个主键作为默认的检查依据
-                    const firstPrimaryKey = primaryKeyArr[0];
+                    return true
+                },
+                getFieldsArray() {
+                    return this.fieldsInput.split('\n').map(l => l.trim()).filter(Boolean)
+                },
+                getPrimaryKeysArray() {
+                    return this.primaryKeys.split(',').map(k => k.trim()).filter(Boolean)
+                },
+                generateSQL() {
+                    if (!this.validateInput()) return
+                    this.loading = true
 
-                    this.generatedSQL = `-- 统计数据量
-SELECT 
-    '${this.table1}' as table_name,
-    COUNT(*) as total_count
-FROM ${this.table1}
-${this.usePartition1 ? `WHERE ${partitionWhere1}` : ''}
+                    try {
+                        const fields = this.getFieldsArray()
+                        const primaryKeyArr = this.getPrimaryKeysArray()
+                        const castType = this.castType
+
+                        // 构建带分区的子查询
+                        const table1Query = this.usePartition1 
+                            ? `(SELECT * FROM ${this.table1} WHERE ${this.partitionField1} = '${this.partitionValue1}')`
+                            : this.table1
+                        const table2Query = this.usePartition2 
+                            ? `(SELECT * FROM ${this.table2} WHERE ${this.partitionField2} = '${this.partitionValue2}')`
+                            : this.table2
+
+                        // 构建比对字段（排除分区字段）
+                        const compareFields = fields
+                            .filter(f => !(
+                                (this.usePartition1 && f === this.partitionField1) ||
+                                (this.usePartition2 && f === this.partitionField2)
+                            ))
+                            .filter(f => !primaryKeyArr.includes(f))
+                            .map(f => `COALESCE(CAST(a.${f} AS ${castType}), '') != COALESCE(CAST(b.${f} AS ${castType}), '')`)
+                            .join(' OR\n            ')
+
+                        // 构建SQL模板
+                        this.generatedSQL = `-- ========== 基础统计 ==========
+-- 数据量对比
+SELECT '${this.table1}' AS table_name, COUNT(*) AS total_count FROM ${table1Query}
 UNION ALL
-SELECT 
-    '${this.table2}' as table_name,
-    COUNT(*) as total_count
-FROM ${this.table2}
-${this.usePartition2 ? `WHERE ${partitionWhere2}` : ''};
+SELECT '${this.table2}' AS table_name, COUNT(*) AS total_count FROM ${table2Query};
 
--- 检查数据差异
+-- ========== 差异统计 ==========
 WITH diff_check AS (
 SELECT 
-    CASE 
-        WHEN a.${firstPrimaryKey} IS NULL THEN '仅在表2中存在'
-        WHEN b.${firstPrimaryKey} IS NULL THEN '仅在表1中存在'
-        WHEN (
-            ${compareFields}
-        ) THEN '数据不一致'
+    CASE
+        WHEN a.${primaryKeyArr[0]} IS NULL THEN '仅在表2中存在'
+        WHEN b.${primaryKeyArr[0]} IS NULL THEN '仅在表1中存在'
+        WHEN (${compareFields}) THEN '数据不一致'
         ELSE '数据一致'
-    END as diff_type,
-    ${primaryKeyArr.map(key => `COALESCE(a.${key}, b.${key}) as ${key}`).join(',\n    ')}
-FROM ${this.table1} a
-FULL OUTER JOIN ${this.table2} b
-ON ${joinConditions}
-${partitionWhere ? `WHERE ${partitionWhere}` : ''}
+    END AS diff_type,
+    ${primaryKeyArr.map(k => `COALESCE(a.${k}, b.${k}) AS ${k}`).join(',\n    ')}
+FROM ${table1Query} a
+FULL OUTER JOIN ${table2Query} b
+ON ${primaryKeyArr.map(k => `a.${k} = b.${k}`).join(' AND ')}
 )
-SELECT 
-    diff_type,
-    COUNT(*) as count
+SELECT diff_type, COUNT(*) AS count
 FROM diff_check
 GROUP BY diff_type
 ORDER BY diff_type;
 
--- 查看不一致的详细数据（限制100条）
+-- ========== 差异详情（最多100条） ==========
 WITH diff_detail AS (
 SELECT 
-    CASE 
-        WHEN a.${firstPrimaryKey} IS NULL THEN '仅在表2中存在'
-        WHEN b.${firstPrimaryKey} IS NULL THEN '仅在表1中存在'
-        WHEN (
-            ${compareFields}
-        ) THEN '数据不一致'
+    CASE
+        WHEN a.${primaryKeyArr[0]} IS NULL THEN '仅在表2中存在'
+        WHEN b.${primaryKeyArr[0]} IS NULL THEN '仅在表1中存在'
+        WHEN (${compareFields}) THEN '数据不一致'
         ELSE '数据一致'
-    END as diff_type,
-    ${fields.map(f => `COALESCE(CAST(a.${f} AS STRING), '') as table1_${f},
-    COALESCE(CAST(b.${f} AS STRING), '') as table2_${f}`).join(',\n    ')}
-FROM ${this.table1} a
-FULL OUTER JOIN ${this.table2} b
-ON ${joinConditions}
-${partitionWhere ? `WHERE ${partitionWhere}` : ''}
+    END AS diff_type,
+    ${fields.map(f => `
+    COALESCE(CAST(a.${f} AS ${castType}), '') AS t1_${f},
+    COALESCE(CAST(b.${f} AS ${castType}), '') AS t2_${f}`).join(',')}
+FROM ${table1Query} a
+FULL OUTER JOIN ${table2Query} b
+ON ${primaryKeyArr.map(k => `a.${k} = b.${k}`).join(' AND ')}
 )
-SELECT *
+SELECT * 
 FROM diff_detail
 WHERE diff_type != '数据一致'
-LIMIT 100;`;
+LIMIT 100;`
+                    } catch (error) {
+                        Swal.fire('生成失败', error.message, 'error')
+                    } finally {
+                        this.loading = false
+                    }
                 },
                 copySQL() {
                     navigator.clipboard.writeText(this.generatedSQL)
-                        .then(() => {
-                            Swal.fire({
-                                icon: 'success',
-                                title: '复制成功',
-                                text: 'SQL已复制到剪贴板！',
-                                timer: 1500, // 1.5秒后自动关闭
-                                showConfirmButton: false
-                            });
-                        })
-                        .catch(err => {
-                            console.error('复制失败:', err);
-                            Swal.fire({
-                                icon: 'error',
-                                title: '复制失败',
-                                text: '请手动复制SQL！',
-                            });
-                        });
+                        .then(() => Swal.fire({
+                            icon: 'success',
+                            title: '复制成功',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }))
+                        .catch(() => Swal.fire('错误', '复制失败，请手动复制', 'error'))
+                },
+                fillExample1() {
+                    this.table1 = 'ods.user_info'
+                    this.table2 = 'ods.user_info_bak'
+                    this.fieldsInput = `id
+name
+age
+gender
+create_time
+update_time`
+                    this.primaryKeys = 'id'
+                    this.usePartition1 = false
+                    this.usePartition2 = false
+                    this.castType = 'STRING'
+                },
+                fillExample2() {
+                    this.table1 = 'dw.order_fact'
+                    this.table2 = 'dw.order_fact_temp'
+                    this.fieldsInput = `order_id
+user_id
+product_id
+quantity
+price
+order_time`
+                    this.primaryKeys = 'order_id,user_id'
+                    this.usePartition1 = false
+                    this.usePartition2 = false
+                    this.castType = 'VARCHAR'
+                },
+                fillExample3() {
+                    this.table1 = 'ads.log_analysis'
+                    this.table2 = 'ads.log_analysis_bak'
+                    this.fieldsInput = `log_id
+user_id
+event_type
+event_time
+duration
+dt`
+                    this.primaryKeys = 'log_id'
+                    this.usePartition1 = true
+                    this.partitionField1 = 'dt'
+                    this.partitionValue1 = '20230101'
+                    this.usePartition2 = true
+                    this.partitionField2 = 'dt'
+                    this.partitionValue2 = '20230101'
+                    this.castType = 'STRING'
                 }
             }
         }).mount('#app')
