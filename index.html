@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    <!-- 头部内容保持不变 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的工具箱</title>
@@ -8,6 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
     <style>
+        /* 样式部分保持不变 */
         [v-cloak] { display: none; }
         .fade-enter-active, .fade-leave-active {
             transition: opacity 0.5s ease;
@@ -21,6 +23,7 @@
     </style>
 </head>
 <body>
+    <!-- 主体内容保持不变 -->
     <div id="app" v-cloak class="min-h-screen transition-colors duration-500" :class="{ 'bg-gray-100 text-gray-900': !isDark, 'bg-gray-900 text-gray-300': isDark }">
         <div class="container mx-auto px-4 py-8">
             <header class="flex justify-between items-center mb-8">
@@ -62,6 +65,7 @@
 
         const app = createApp({
             setup() {
+                // 状态管理部分保持不变
                 const isDark = ref(false)
                 const currentLang = ref('zh')
                 const searchQuery = ref('')
@@ -84,6 +88,7 @@
                     }
                 })
 
+                // 添加新工具到开发者工具分类
                 const categories = [
                     {
                         name: 'textTools',
@@ -92,7 +97,7 @@
                             { name: 'numToChinese', description: 'numToChineseDesc', url: 'https://hiszm.github.io/num2cn/', icon: 'mdi-translate', iconColor: 'text-green-500' },
                             { name: 'textConvert', description: 'textConvertDesc', url: 'https://hiszm.github.io/text_convert/', icon: 'mdi-format-text', iconColor: 'text-cyan-500' },
                             { name: 'wordCloud', description: 'wordCloudDesc', url: 'https://hiszm.github.io/MyToolBox/tools/ciyun/', icon: 'mdi-cloud-outline', iconColor: 'text-violet-500' },
-                            { name: 'setCalculator', description: 'setCalculatorDesc', url: 'https://hiszm.github.io/MyToolBox/tools/set_calc/', icon: 'mdi-set-center', iconColor: 'text-pink-500' }, // 新增的集合计算器工具
+                            { name: 'setCalculator', description: 'setCalculatorDesc', url: 'https://hiszm.github.io/MyToolBox/tools/set_calc/', icon: 'mdi-set-center', iconColor: 'text-pink-500' },
                         ]
                     },
                     {
@@ -111,10 +116,19 @@
                             { name: 'hiveSQLMerge', description: 'hiveSQLMergeDesc', url: 'https://hiszm.github.io/merge_ods/', icon: 'mdi-database', iconColor: 'text-orange-500' },
                             { name: 'jsonFormat', description: 'jsonFormatDesc', url: 'https://hiszm.github.io/extract_json/', icon: 'mdi-code-json', iconColor: 'text-teal-500' },
                             { name: 'diffCheck', description: 'diffCheckDesc', url: 'https://hiszm.github.io/MyToolBox/tools/diff_check/', icon: 'mdi-file-compare', iconColor: 'text-orange-500' },
+                            // 新增的2.0版本工具
+                            { 
+                                name: 'diffCheck2', 
+                                description: 'diffCheck2Desc', 
+                                url: 'https://hiszm.github.io/MyToolBox/tools/diff_check2/', 
+                                icon: 'mdi-file-compare', 
+                                iconColor: 'text-red-500' 
+                            },
                         ]
                     },
                 ]
 
+                // 更新翻译内容
                 const translations = {
                     zh: {
                         myToolbox: '我的工具箱',
@@ -144,10 +158,12 @@
                         textConvertDesc: '转换文本格式和大小写',
                         wordCloud: '在线词云生成器',
                         wordCloudDesc: '生成文本词云可视化图',
-                        diffCheck: '表数据比对工具',
+                        diffCheck: '表数据比对工具（主键表）',
                         diffCheckDesc: 'Hive 表数据比对工具',
-                        setCalculator: '集合计算器', // 新增的工具翻译
-                        setCalculatorDesc: '计算集合的交集、并集和差集', // 新增的工具描述翻译
+                        diffCheck2: '表数据比对工具2.0',
+                        diffCheck2Desc: 'Hive表数据比对工具升级版（MD5全字段）',
+                        setCalculator: '集合计算器',
+                        setCalculatorDesc: '计算集合的交集、并集和差集',
                     },
                     en: {
                         myToolbox: 'My Toolbox',
@@ -179,11 +195,14 @@
                         wordCloudDesc: 'Generate word cloud visualization from text',
                         diffCheck: 'Diff Check Tool',
                         diffCheckDesc: 'Check differences between texts or files',
-                        setCalculator: 'Set Calculator', // 新增的工具翻译
-                        setCalculatorDesc: 'Calculate union, intersection, and difference of sets', // 新增的工具描述翻译
+                        diffCheck2: 'Table Data Diff Check 2.0',
+                        diffCheck2Desc: 'Enhanced Hive table data comparison tool (multi-engine support)',
+                        setCalculator: 'Set Calculator',
+                        setCalculatorDesc: 'Calculate union, intersection, and difference of sets',
                     }
                 }
 
+                // 剩余代码保持不变
                 const t = (key) => translations[currentLang.value][key] || key
 
                 const filteredCategories = computed(() => {
