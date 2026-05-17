@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通讯录导入小帮手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div id="app" class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold text-center mb-8">通讯录导入小帮手</h1>
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4">使用说明</h2>
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold mb-2">安卓手机</h3>
+                <ol class="list-decimal list-inside pl-4">
+                    <li class="mb-2">将下载的 .vcf 文件发送到手机。</li>
+                    <li class="mb-2">通过企微或其他应用打开，选择通讯录与拨号应用。</li>
+                    <li class="mb-2">或者直接在手机通讯录应用中，进入设置找到"导入"选项。</li>
+                    <li class="mb-2">选择从磁盘导入并找到 .vcf 文件导入。</li>
+                </ol>
+            </div>
+            <div>
+                <h3 class="text-xl font-semibold mb-2">iPhone</h3>
+                <ol class="list-decimal list-inside pl-4">
+                    <li class="mb-2">将 .vcf 文件作为邮件附件发送到 iPhone。</li>
+                    <li class="mb-2">在邮件应用中打开邮件并导入通讯录。</li>
+                </ol>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="mb-4 flex">
+                <div class="w-1/2 pr-2">
+                    <label for="names" class="block text-gray-700 font-bold mb-2">联系人姓名（每行一个）：</label>
+                    <textarea id="names" v-model="namesInput" rows="10" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="w-1/2 pl-2">
+                    <label for="phones" class="block text-gray-700 font-bold mb-2">电话号码（每行一个）：</label>
+                    <textarea id="phones" v-model="phonesInput" rows="10" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+            </div>
+            <div class="flex space-x-4 mb-4">
+                <button @click="processContacts" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    处理联系人
+                </button>
+                <button @click="clearInputs" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    清空输入
+                </button>
+            </div>
+            <div v-if="contacts.length > 0" class="mb-4">
+                <h2 class="text-xl font-semibold mb-2">已处理的联系人：</h2>
+                <ul class="list-disc list-inside">
+                    <li v-for="(contact, index) in contacts" :key="index" class="text-gray-700">
+                        {{ contact.name }} - {{ contact.phone }}
+                    </li>
+                </ul>
+            </div>
+            <button @click="generateVCF" :disabled="contacts.length === 0" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed">
+                生成并下载通讯录文件 (VCF)
+            </button>
+            <p v-if="errorMessage" class="mt-4 text-red-500">{{ errorMessage }}</p>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue
+
+        createApp({
+            setup() {
+                const defaultNames = "蔡一坤\n蔡二坤\n蔡三坤"
+                const defaultPhones = "12345678901\n+86 12345678902\n12345678903"
+
+                const namesInput = ref(defaultNames)
+                const phonesInput = ref(defaultPhones)
+                const contacts = ref([])
+                const errorMessage = ref('')
+
+                const isPhoneNumber = (str) => {
+                    return /^\+?\d{7,}$/.test(str.replace(/\D/g, ''))
+                }
+
+                const processContacts = () => {
+                    const names = namesInput.value.split('\n').map(name => name.trim()).filter(name => name)
+                    const phones = phonesInput.value.split('\n').map(phone => phone.trim()).filter(phone => phone)
+
+                    if (names.length !== phones.length) {
+                        errorMessage.value = '姓名和电话号码的行数不匹配，请检查输入。'
+                        return
+                    }
+
+                    contacts.value = names.map((name, index) => ({
+                        name,
+                        phone: phones[index]
+                    })).filter(contact => contact.name && isPhoneNumber(contact.phone))
+
+                    if (contacts.value.length === 0) {
+                        errorMessage.value = '没有找到有效的联系人数据。请检查输入格式。'
+                    } else {
+                        errorMessage.value = ''
+                    }
+                }
+
+                const clearInputs = () => {
+                    namesInput.value = ''
+                    phonesInput.value = ''
+                    contacts.value = []
+                    errorMessage.value = ''
+                }
+
+                const generateVCF = () => {
+                    try {
+                        let vcfContent = ''
+                        contacts.value.forEach(contact => {
+                            vcfContent += 'BEGIN:VCARD\n'
+                            vcfContent += 'VERSION:3.0\n'
+                            vcfContent += `FN:${contact.name}\n`
+                            vcfContent += `TEL;TYPE=CELL:${contact.phone}\n`
+                            vcfContent += 'END:VCARD\n'
+                        })
+
+                        const blob = new Blob([vcfContent], { type: 'text/vcard' })
+                        const url = URL.createObjectURL(blob)
+                        
+                        const link = document.createElement('a')
+                        link.href = url
+                        link.download = 'contacts.vcf'
+                        document.body.appendChild(link)
+                        link.click()
+                        document.body.removeChild(link)
+
+                        setTimeout(() => URL.revokeObjectURL(url), 100)
+
+                        errorMessage.value = ''
+                    } catch (error) {
+                        console.error('Error generating VCF:', error)
+                        errorMessage.value = '生成 VCF 文件时出错，请重试。'
+                    }
+                }
+
+                // 初始化时处理默认联系人
+                processContacts()
+
+                return {
+                    namesInput,
+                    phonesInput,
+                    contacts,
+                    errorMessage,
+                    processContacts,
+                    clearInputs,
+                    generateVCF
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

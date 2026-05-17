@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh" class="transition-colors duration-300">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字符转换工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+</head>
+<body class="transition-colors duration-300">
+    <div id="app" v-cloak class="min-h-screen transition-colors duration-300" :class="{'bg-gray-100 text-gray-800': !darkMode, 'bg-gray-900 text-white': darkMode}">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex justify-end mb-4">
+                <button @click="toggleDarkMode" class="bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-bold py-2 px-4 rounded transition-colors duration-300">
+                    {{ darkMode ? '🌞' : '🌙' }}
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div class="rounded-lg shadow-md p-4" :class="{'bg-white': !darkMode, 'bg-gray-800': darkMode}">
+                    <h2 class="text-xl font-bold mb-2" :class="{'text-gray-800': !darkMode, 'text-white': darkMode}">字符转换工具</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="input" class="block mb-1" :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">输入文本：</label>
+                            <input id="input" v-model="inputText" type="text" class="w-full p-2 border rounded" :class="{'bg-white text-gray-800': !darkMode, 'bg-gray-700 text-white': darkMode}">
+                        </div>
+                        <div>
+                            <label for="conversion" class="block mb-1" :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">选择转换方式：</label>
+                            <select id="conversion" v-model="selectedConversion" class="w-full p-2 border rounded" :class="{'bg-white text-gray-800': !darkMode, 'bg-gray-700 text-white': darkMode}">
+                                <option value="dashToUnderscore">横线转下划线</option>
+                                <option value="underscoreToDash">下划线转横线</option>
+                                <option value="camelToUnderscore">驼峰转下划线</option>
+                                <option value="underscoreToCamel">下划线转驼峰</option>
+                                <option value="capitalizeFirst">首字母大写</option>
+                                <option value="lowercaseFirst">首字母小写</option>
+                                <option value="uppercase">全部大写</option>
+                                <option value="lowercase">全部小写</option>
+                            </select>
+                        </div>
+                        <button @click="convertText" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                            转换
+                        </button>
+                        <div>
+                            <label for="output" class="block mb-1" :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">转换结果：</label>
+                            <textarea id="output" v-model="outputText" readonly class="w-full p-2 border rounded h-20" :class="{'bg-white text-gray-800': !darkMode, 'bg-gray-700 text-white': darkMode}"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                darkMode: false,
+                inputText: '',
+                outputText: '',
+                selectedConversion: 'dashToUnderscore'
+            },
+            mounted() {
+                const savedDarkMode = localStorage.getItem('darkMode');
+                if (savedDarkMode !== null) {
+                    this.darkMode = JSON.parse(savedDarkMode);
+                    this.applyDarkMode();
+                }
+            },
+            methods: {
+                toggleDarkMode() {
+                    this.darkMode = !this.darkMode;
+                    this.applyDarkMode();
+                    localStorage.setItem('darkMode', JSON.stringify(this.darkMode));
+                },
+                applyDarkMode() {
+                    if (this.darkMode) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                },
+                convertText() {
+                    switch (this.selectedConversion) {
+                        case 'dashToUnderscore':
+                            this.outputText = this.inputText.replace(/-/g, '_');
+                            break;
+                        case 'underscoreToDash':
+                            this.outputText = this.inputText.replace(/_/g, '-');
+                            break;
+                        case 'camelToUnderscore':
+                            this.outputText = this.inputText.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
+                            break;
+                        case 'underscoreToCamel':
+                            this.outputText = this.inputText.replace(/_([a-z])/g, (m, p1) => p1.toUpperCase());
+                            break;
+                        case 'capitalizeFirst':
+                            this.outputText = this.inputText.charAt(0).toUpperCase() + this.inputText.slice(1);
+                            break;
+                        case 'lowercaseFirst':
+                            this.outputText = this.inputText.charAt(0).toLowerCase() + this.inputText.slice(1);
+                            break;
+                        case 'uppercase':
+                            this.outputText = this.inputText.toUpperCase();
+                            break;
+                        case 'lowercase':
+                            this.outputText = this.inputText.toLowerCase();
+                            break;
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

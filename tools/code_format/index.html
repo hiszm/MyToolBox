@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码格式化工具</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql-formatter/4.0.2/sql-formatter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.5.1/standalone.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.5.1/parser-babel.js"></script>
+</head>
+<body>
+    <div id="app" class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4">Code Format</h1>
+        <div class="flex flex-col h-screen">
+            <div class="flex flex-wrap gap-2 items-center mb-4">
+                <button @click="formatCode" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    格式化
+                </button>
+                <button @click="compressCode" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    压缩
+                </button>
+                <button @click="loadTestCase" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
+                    测试用例
+                </button>
+                <button @click="clearCode" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                    清空
+                </button>
+                <select v-model="selectedLanguage" class="ml-2 p-2 border rounded">
+                    <option v-for="lang in languages" :value="lang">{{ lang }}</option>
+                </select>
+            </div>
+            <textarea v-model="code" class="flex-grow p-2 border rounded resize-none" placeholder="在此输入代码..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue
+
+        createApp({
+            setup() {
+                const code = ref('')
+                const selectedLanguage = ref('SQL')
+                const languages = [
+                    'SQL', 'Python', 'C/C++', 'Java', 'C#', 'JavaScript',
+                    'Go', 'PHP', 'Scala', 'Rust', 'Ruby', 'Kotlin', 'JSON'
+                ]
+
+                const formatCode = () => {
+                    switch (selectedLanguage.value) {
+                        case 'SQL':
+                            code.value = sqlFormatter.format(code.value)
+                            break
+                        case 'JavaScript':
+                        case 'JSON':
+                            code.value = prettier.format(code.value, { parser: "json", plugins: prettierPlugins })
+                            break
+                        case 'Python':
+                        case 'Ruby':
+                            code.value = js_beautify(code.value, { indent_size: 4 })
+                            break
+                        case 'C/C++':
+                        case 'Java':
+                        case 'C#':
+                        case 'Go':
+                        case 'PHP':
+                        case 'Scala':
+                        case 'Rust':
+                        case 'Kotlin':
+                            code.value = js_beautify(code.value, { indent_size: 2 })
+                            break
+                    }
+                }
+
+                const compressCode = () => {
+                    if (selectedLanguage.value === 'JSON') {
+                        try {
+                            code.value = JSON.stringify(JSON.parse(code.value))
+                        } catch (e) {
+                            alert('Invalid JSON')
+                        }
+                    } else {
+                        code.value = code.value.replace(/\s+/g, ' ').trim()
+                    }
+                }
+
+                const loadTestCase = () => {
+                    switch (selectedLanguage.value) {
+                        case 'SQL':
+                            code.value = 'SELECT id, name, email FROM users WHERE age > 18 AND city = "New York" ORDER BY name ASC LIMIT 10'
+                            break
+                        case 'Python':
+                            code.value = 'def hello_world():\n    print("Hello, World!")\n\nfor i in range(5):\n    hello_world()'
+                            break
+                        case 'C/C++':
+                            code.value = '#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}'
+                            break
+                        case 'Java':
+                            code.value = 'public class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}'
+                            break
+                        case 'C#':
+                            code.value = 'using System;\n\nclass Program {\n    static void Main(string[] args) {\n        Console.WriteLine("Hello, World!");\n    }\n}'
+                            break
+                        case 'JavaScript':
+                            code.value = 'function helloWorld() {\n    console.log("Hello, World!");\n}\n\nfor (let i = 0; i < 5; i++) {\n    helloWorld();\n}'
+                            break
+                        case 'Go':
+                            code.value = 'package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Hello, World!")\n}'
+                            break
+                        case 'PHP':
+                            code.value = '<?php\nfunction helloWorld() {\n    echo "Hello, World!";\n}\n\nfor ($i = 0; $i < 5; $i++) {\n    helloWorld();\n}\n?>'
+                            break
+                        case 'Scala':
+                            code.value = 'object HelloWorld {\n    def main(args: Array[String]): Unit = {\n        println("Hello, World!")\n    }\n}'
+                            break
+                        case 'Rust':
+                            code.value = 'fn main() {\n    println!("Hello, World!");\n}'
+                            break
+                        case 'Ruby':
+                            code.value = 'def hello_world\n    puts "Hello, World!"\nend\n\n5.times do\n    hello_world\nend'
+                            break
+                        case 'Kotlin':
+                            code.value = 'fun main() {\n    println("Hello, World!")\n}'
+                            break
+                        case 'JSON':
+                            code.value = '{"name":"John","age":30,"city":"New York","hobbies":["reading","music","sports"],"married":false}'
+                            break
+                    }
+                }
+
+                const clearCode = () => {
+                    code.value = ''
+                }
+
+                return {
+                    code,
+                    selectedLanguage,
+                    languages,
+                    formatCode,
+                    compressCode,
+                    loadTestCase,
+                    clearCode
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

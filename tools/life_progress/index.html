@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh" class="transition-colors duration-300">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人生进度条</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
+    <style>
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body class="transition-colors duration-300">
+    <div id="app" v-cloak class="min-h-screen transition-colors duration-300" :class="{'bg-gray-100 text-gray-800': !darkMode, 'bg-gray-900 text-white': darkMode}">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex justify-end mb-4">
+                <button @click="toggleDarkMode" class="bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-bold py-2 px-4 rounded transition-colors duration-300">
+                    <span v-if="darkMode" class="mdi mdi-white-balance-sunny"></span>
+                    <span v-else class="mdi mdi-weather-night"></span>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div class="text-center">
+                    <p class="text-xl" :class="{'text-gray-800': !darkMode, 'text-white': darkMode}">{{ quote }}</p>
+                    <p class="text-sm mt-2" :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">—— {{ author }} {{ source }}</p>
+                </div>
+                
+                <div class="rounded-lg shadow-md p-4" :class="{'bg-white': !darkMode, 'bg-gray-800': darkMode}">
+                    <h2 class="text-xl font-bold mb-2" :class="{'text-gray-800': !darkMode, 'text-white': darkMode}">当前日期和时间</h2>
+                    <p :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">{{ currentDateTime }}</p>
+                    <p :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">时间戳：{{ timestamp }}</p>
+                    <p :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">本周是：{{ weekNumber }} </p>
+                </div>
+
+                <div class="rounded-lg shadow-md p-4" :class="{'bg-white': !darkMode, 'bg-gray-800': darkMode}">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-xl font-bold" :class="{'text-gray-800': !darkMode, 'text-white': darkMode}">人生剩余时间</h2>
+                        <div class="flex items-center space-x-2">
+                            <select v-model="birthYear" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded px-2 py-1">
+                                <option v-for="year in birthYears" :key="year" :value="year">{{ year }} 年</option>
+                            </select>
+                            <select v-model="expectedLifespan" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded px-2 py-1">
+                                <option v-for="age in [50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]" :key="age" :value="age">活到 {{ age }} 岁</option>
+                            </select>
+                            <button @click="showExplanation = !showExplanation" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-full w-6 h-6 flex items-center justify-center">?</button>
+                        </div>
+                    </div>
+                    <div v-if="showExplanation" class="mb-2 text-sm" :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">
+                        2024年法定退休年龄规定：男性干部和工人需满60岁，女性干部55岁，女性工人50岁，且连续工龄或工作年限需满10年。
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-2">
+                        <div class="bg-purple-600 h-2.5 rounded-full" :style="{ width: `${lifeProgress}%` }"></div>
+                    </div>
+                    <p :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">
+                        你的人生还剩下大约 {{ remainingYears }} 年
+                    </p>
+                    <p class="mt-2" :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">
+                        {{ lifeProgress.toFixed(0) }}% 已经过去
+                    </p>
+                    <p class="mt-2" :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">
+                        你也许还能再吃 {{ remainingMeals }} 顿饭，度过 {{ remainingWeekends }} 个愉快的周末，以及享受 {{ remainingNights }} 个美妙的夜晚。
+                    </p>
+                </div>
+
+                <div class="rounded-lg shadow-md p-4" :class="{'bg-white': !darkMode, 'bg-gray-800': darkMode}">
+                    <h2 class="text-xl font-bold mb-2" :class="{'text-gray-800': !darkMode, 'text-white': darkMode}">今天剩余时间</h2>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                        <div class="bg-blue-600 h-2.5 rounded-full" :style="{ width: `${100 - (remainingHoursToday / 24 * 100)}%` }"></div>
+                    </div>
+                    <p class="mt-2" :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">{{ remainingHoursToday.toFixed(2) }} 小时</p>
+                </div>
+
+                <div class="rounded-lg shadow-md p-4" :class="{'bg-white': !darkMode, 'bg-gray-800': darkMode}">
+                    <h2 class="text-xl font-bold mb-2" :class="{'text-gray-800': !darkMode, 'text-white': darkMode}">本周剩余天数</h2>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                        <div class="bg-green-600 h-2.5 rounded-full" :style="{ width: `${(7 - remainingDaysThisWeek) / 7 * 100}%` }"></div>
+                    </div>
+                    <p class="mt-2" :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">{{ remainingDaysThisWeek }} 天</p>
+                </div>
+
+                <div class="rounded-lg shadow-md p-4" :class="{'bg-white': !darkMode, 'bg-gray-800': darkMode}">
+                    <h2 class="text-xl font-bold mb-2" :class="{'text-gray-800': !darkMode, 'text-white': darkMode}">本月剩余天数</h2>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                        <div class="bg-yellow-600 h-2.5 rounded-full" :style="{ width: `${(daysInMonth - remainingDaysThisMonth) / daysInMonth * 100}%` }"></div>
+                    </div>
+                    <p class="mt-2" :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">{{ remainingDaysThisMonth }} 天</p>
+                </div>
+
+                <div class="rounded-lg shadow-md p-4" :class="{'bg-white': !darkMode, 'bg-gray-800': darkMode}">
+                    <h2 class="text-xl font-bold mb-2" :class="{'text-gray-800': !darkMode, 'text-white': darkMode}">本年剩余天数</h2>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                        <div class="bg-red-600 h-2.5 rounded-full" :style="{ width: `${(365 - remainingDaysThisYear) / 365 * 100}%` }"></div>
+                    </div>
+                    <p class="mt-2" :class="{'text-gray-600': !darkMode, 'text-gray-400': darkMode}">{{ remainingDaysThisYear }} 天</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                darkMode: false,
+                quote: '',
+                author: '',
+                source: '',
+                currentDateTime: '',
+                timestamp: 0,
+                weekNumber: 0,
+                remainingHoursToday: 0,
+                remainingDaysThisWeek: 0,
+                remainingDaysThisMonth: 0,
+                remainingDaysThisYear: 0,
+                daysInMonth: 0,
+                expectedLifespan: 80,
+                birthYear: 1990,
+                showExplanation: false,
+                birthYears: []
+            },
+            computed: {
+                age() {
+                    return new Date().getFullYear() - this.birthYear;
+                },
+                remainingYears() {
+                    return Math.max(0, this.expectedLifespan - this.age);
+                },
+                lifeProgress() {
+                    return (this.age / this.expectedLifespan) * 100;
+                },
+                remainingMeals() {
+                    return this.remainingYears * 365 * 3;
+                },
+                remainingWeekends() {
+                    return this.remainingYears * 52;
+                },
+                remainingNights() {
+                    return this.remainingYears * 365;
+                }
+            },
+            created() {
+                const currentYear = new Date().getFullYear();
+                for (let year = 1970; year <= currentYear; year += 5) {
+                    this.birthYears.push(year);
+                }
+                if (!this.birthYears.includes(currentYear)) {
+                    this.birthYears.push(currentYear);
+                }
+                this.birthYears.sort((a, b) => b - a);
+            },
+            mounted() {
+                this.fetchQuote();
+                this.updateDateTime();
+                setInterval(this.updateDateTime, 1000);
+
+                const savedDarkMode = localStorage.getItem('darkMode');
+                if (savedDarkMode !== null) {
+                    this.darkMode = JSON.parse(savedDarkMode);
+                    this.applyDarkMode();
+                }
+            },
+            methods: {
+                toggleDarkMode() {
+                    this.darkMode = !this.darkMode;
+                    this.applyDarkMode();
+                    localStorage.setItem('darkMode', JSON.stringify(this.darkMode));
+                },
+                applyDarkMode() {
+                    if (this.darkMode) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                },
+                fetchQuote() {
+                    axios.get('https://v1.hitokoto.cn?c=i')
+                        .then(response => {
+                            this.quote = response.data.hitokoto;
+                            this.author = response.data.from_who || '佚名';
+                            this.source = response.data.from ? `《${response.data.from}》` : '';
+                        })
+                        .catch(error => {
+                            console.error('Error fetching quote:', error);
+                            this.quote = '无法获取名言';
+                            this.author = '';
+                            this.source = '';
+                        });
+                },
+                updateDateTime() {
+                    const now = new Date();
+                    this.currentDateTime = this.formatDate(now);
+                    this.timestamp = now.getTime();
+                    
+                    const startOfYear = new Date(now.getFullYear(), 0, 1);
+                    const daysPassed = Math.floor((now - startOfYear) / (24 * 60 * 60 * 1000));
+                    const weekNumber = Math.ceil((daysPassed + startOfYear.getDay() + 1) / 7);
+                    this.weekNumber = weekNumber < 10 ? `${now.getFullYear()}0${weekNumber}` : `${now.getFullYear()}${weekNumber}`;
+                    
+                    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+                    this.remainingHoursToday = (endOfDay - now) / 1000 / 60 / 60;
+                    
+                    const endOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (7 - now.getDay()), 23, 59, 59, 999);
+                    this.remainingDaysThisWeek = Math.ceil((endOfWeek - now) / (1000 * 60 * 60 * 24));
+                    
+                    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+                    this.remainingDaysThisMonth = Math.ceil((endOfMonth - now) / (1000 * 60 * 60 * 24));
+                    this.daysInMonth = endOfMonth.getDate();
+                    
+                    const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+                    this.remainingDaysThisYear = Math.ceil((endOfYear - now) / (1000 * 60 * 60 * 24));
+                },
+                formatDate(date) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    const seconds = String(date.getSeconds()).padStart(2, '0');
+                    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

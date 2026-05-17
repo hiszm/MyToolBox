@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>值班排班表</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+            padding: 20px;
+            margin-top: 20px;
+            max-width: 1920px; /* 设置最大宽度 */
+            margin-left: auto; /* 左右居中对齐 */
+            margin-right: auto; /* 左右居中对齐 */
+        }
+
+        .page-title {
+            color: #007bff;
+            font-weight: 700;
+        }
+
+        .calendar-container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+            padding: 20px;
+        }
+
+        #calendar {
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 .2rem rgba(0, 123, 255, .25);
+        }
+
+        .fc-daygrid-day-top {
+            text-align: left;
+        }
+
+        .fc-daygrid-event {
+            color: #007bff;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 5px;
+            font-size: 12px;
+            line-height: 1.5;
+            background-color: transparent; /* Remove background color */
+        }
+
+        .fc-event-title {
+            color: #007bff; /* Font color for event titles */
+        }
+
+        .fc-day-sat .fc-daygrid-day-number,
+        .fc-day-sun .fc-daygrid-day-number {
+            color: #dc3545; /* Red for Sunday and Saturday */
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app" class="container">
+        <h1 class="text-center text-3xl mb-4 page-title">值班排班表</h1>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="calendar-container">
+                <div id="calendar"></div>
+            </div>
+            <div>
+                <div class="mb-4">
+                    <label for="staffList" class="block mb-1">值班人员列表：</label>
+                    <textarea id="staffList" v-model="staffList" rows="5"
+                        class="form-textarea w-full px-3 py-2 placeholder-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200"
+                        placeholder="输入值班人员姓名，每行一个"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label for="startDate" class="block mb-1">开始日期：</label>
+                    <input type="date" id="startDate" v-model="startDate"
+                        class="form-input w-full px-3 py-2 placeholder-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200">
+                </div>
+                <div class="mb-4">
+                    <label for="startStaff" class="block mb-1">起始值班人员：</label>
+                    <select id="startStaff" v-model="startStaff"
+                        class="form-select w-full px-3 py-2 placeholder-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200">
+                        <option v-for="staff in staffListArray" :key="staff" :value="staff">{{ staff }}</option>
+                    </select>
+                </div>
+                <button @click="generateSchedule"
+                    class="btn btn-primary w-full px-4 py-2 text-white rounded-md hover:bg-blue-700">重新生成值班表</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.21/dist/vue.global.prod.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.all.min.js"></script>
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    calendar: null,
+                    staffList: `蔡一坤
+蔡二坤
+蔡三坤
+蔡四坤
+蔡五坤
+蔡六坤
+蔡七坤
+蔡八坤
+蔡九坤
+蔡十坤
+`,
+                    startDate: '2024-06-20',
+                    startStaff: '', // Initially empty
+                    events: []
+                };
+            },
+            computed: {
+                staffListArray() {
+                    return this.staffList.split('\n').map(line => line.trim()).filter(line => line !== '');
+                }
+            },
+            methods: {
+                initCalendar() {
+                    const calendarEl = document.getElementById('calendar');
+                    this.calendar = new FullCalendar.Calendar(calendarEl, {
+                        initialView: 'dayGridMonth',
+                        headerToolbar: {
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: ''
+                        },
+                        events: this.events,
+                        eventContent: this.eventContent,
+                        dayCellContent: this.dayCellContent,
+                        buttonText: {
+                            today: '今天',
+                            prev: '上个月',
+                            next: '下个月'
+                        },
+                        buttonIcons: {
+                            prev: 'chevron-left',
+                            next: 'chevron-right'
+                        },
+                        locale: 'zh-cn'
+                    });
+                    this.calendar.render();
+                },
+                eventContent(eventInfo) {
+                    return {
+                        html: `<div class="fc-event-title">${eventInfo.event.extendedProps.staff}</div>`
+                    };
+                },
+                dayCellContent(dayInfo) {
+                    return {
+                        html: `<div class="fc-daygrid-day-number">${dayInfo.dayNumberText}</div>`
+                    };
+                },
+                generateSchedule() {
+                    const staffArray = this.staffListArray;
+                    const startDate = new Date(this.startDate);
+                    const startStaff = this.startStaff;
+
+                    if (staffArray.length === 0 || isNaN(startDate.getTime())) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '错误',
+                            text: '请确保已输入值班人员并选择了开始日期！'
+                        });
+                        return;
+                    }
+
+                    let events = [];
+                    let currentIndex = staffArray.indexOf(startStaff);
+                    let currentDate = new Date(startDate);
+                    const endDate = new Date(currentDate.getFullYear() + 10, currentDate.getMonth(), currentDate.getDate());
+
+                    while (currentDate <= endDate) {
+                        events.push({
+                            start: new Date(currentDate),
+                            extendedProps: {
+                                staff: staffArray[currentIndex]
+                            }
+                        });
+                        currentIndex = (currentIndex + 1) % staffArray.length;
+                        currentDate.setDate(currentDate.getDate() + 1);
+                    }
+
+                    this.events = events;
+                    this.calendar.removeAllEvents();
+                    this.calendar.addEventSource(events);
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: '成功',
+                        text: '值班表已生成！'
+                    });
+                }
+            },
+            mounted() {
+                this.initCalendar();
+                // Set the default startStaff to the first value in staffListArray
+                if (this.staffListArray.length > 0) {
+                    this.startStaff = this.staffListArray[0];
+                    // Trigger generateSchedule on initial load
+                    this.generateSchedule();
+                }
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+
+</html>
+
+
+
