@@ -32,6 +32,10 @@ const filtered = computed(() => {
 
 const totalCount = computed(() => TOOLS.length)
 const newCount = computed(() => TOOLS.filter((t) => t.isNew).length)
+
+function scrollToTools() {
+  document.getElementById('tools')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 </script>
 
 <template>
@@ -70,13 +74,14 @@ const newCount = computed(() => TOOLS.filter((t) => t.isNew).length)
         </p>
 
         <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <a
-            href="#tools"
+          <button
+            type="button"
             class="inline-flex h-11 items-center gap-2 rounded-lg bg-accent px-6 text-sm font-medium text-accent-fg shadow-md transition hover:brightness-110"
+            @click="scrollToTools"
           >
             <Icon name="sparkles" class="size-4" />
             {{ t({ zh: '开始使用', en: 'Get started' }) }}
-          </a>
+          </button>
           <a
             href="https://github.com/hiszm/MyToolBox"
             target="_blank"
