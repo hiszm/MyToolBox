@@ -35,6 +35,12 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          # Switch this repository's Pages source to "GitHub Actions" if it is
+          # still set to "Deploy from a branch". Without this, GitHub's
+          # built-in pages-build-deployment workflow races with ours and
+          # overwrites the artifact with the unbuilt source.
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
