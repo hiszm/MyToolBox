@@ -1,0 +1,74 @@
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html,
+  body {
+    @apply min-h-screen;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+
+  body {
+    @apply bg-surface text-ink;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  ::selection {
+    background-color: rgb(var(--accent) / 0.35);
+    color: rgb(var(--ink));
+  }
+
+  /* Focus styling: keyboard only */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-surface;
+  }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-border;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-border-strong;
+  }
+}
+
+@layer components {
+  /* Common surface card */
+  .card {
+    @apply rounded-xl border border-border bg-surface-raised;
+  }
+
+  /* Glassy hero overlay */
+  .glass {
+    @apply border border-border/60 bg-surface-raised/60 backdrop-blur-xl;
+  }
+
+  /* Mono monospace text utility for code */
+  .mono {
+    @apply font-mono text-sm tabular-nums;
+  }
+
+  /* Accent text */
+  .text-accent {
+    color: rgb(var(--accent));
+  }
+}

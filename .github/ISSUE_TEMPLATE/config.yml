@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 General question
+    url: https://github.com/hiszm/MyToolBox/discussions
+    about: Ask a question or share an idea in Discussions before opening an issue
+  - name: 📖 Documentation
+    url: https://github.com/hiszm/MyToolBox#readme
+    about: README, CONTRIBUTING and SECURITY docs

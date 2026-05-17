@@ -1,0 +1,9 @@
+# Code owners for MyToolBox
+# Reviewers are automatically requested when a PR touches matching files.
+
+*                       @hiszm
+/src/                   @hiszm
+/.github/               @hiszm
+README.md               @hiszm
+CONTRIBUTING.md         @hiszm
+SECURITY.md             @hiszm

@@ -1,0 +1,65 @@
+{
+  "name": "mytoolbox",
+  "version": "2.0.0",
+  "description": "A modern, fast, privacy-first collection of developer & productivity tools — entirely in your browser.",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "homepage": "https://hiszm.github.io/MyToolBox/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hiszm/MyToolBox.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hiszm/MyToolBox/issues"
+  },
+  "keywords": [
+    "toolbox",
+    "developer-tools",
+    "vue3",
+    "vite",
+    "typescript",
+    "tailwindcss",
+    "pwa"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{vue,ts,tsx,js,jsx,json,md,css,html}\"",
+    "format:check": "prettier --check \"**/*.{vue,ts,tsx,js,jsx,json,md,css,html}\"",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@vueuse/core": "^14.0.0",
+    "diff-match-patch": "^1.0.5",
+    "js-base64": "^3.7.7",
+    "qrcode": "^1.5.4",
+    "vue": "^3.5.0",
+    "vue-router": "^4.4.0"
+  },
+  "devDependencies": {
+    "@types/diff-match-patch": "^1.0.36",
+    "@types/node": "^22.0.0",
+    "@types/qrcode": "^1.5.5",
+    "@vitejs/plugin-vue": "^5.1.0",
+    "@vue/eslint-config-prettier": "^10.0.0",
+    "@vue/eslint-config-typescript": "^14.0.0",
+    "@vue/test-utils": "^2.4.0",
+    "autoprefixer": "^10.4.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-vue": "^9.0.0",
+    "jsdom": "^25.0.0",
+    "postcss": "^8.4.0",
+    "prettier": "^3.3.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "~5.5.0",
+    "vite": "^5.4.0",
+    "vitest": "^2.0.0",
+    "vue-tsc": "^2.0.0"
+  }
+}

@@ -1,0 +1,41 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Asia/Shanghai
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      vue-stack:
+        patterns:
+          - 'vue*'
+          - '@vue/*'
+          - '@vitejs/*'
+          - 'vite'
+      lint-stack:
+        patterns:
+          - 'eslint*'
+          - '@vue/eslint-*'
+          - 'prettier'
+      types:
+        patterns:
+          - '@types/*'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: ci
