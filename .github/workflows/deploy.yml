@@ -34,7 +34,7 @@ jobs:
         run: npm run build
 
       - name: Configure Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
         with:
           # Switch this repository's Pages source to "GitHub Actions" if it is
           # still set to "Deploy from a branch". Without this, GitHub's
